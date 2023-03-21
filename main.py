@@ -21,7 +21,7 @@ class App(tk.Tk):
             self.frames[f] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(bookings)
+        self.show_frame(clients)
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -48,32 +48,17 @@ class bookings(tk.Frame):
 
 
 
-
-
-
-    def get_selection(self, event):
-        # row id of treeview
-        selected_item = self.trv.focus()
-        data = self.trv.item(selected_item)
-        # converts to the data at row id
-        self.selected = data.get("values")
-        print(self.selected)
-
-    def manage_booking_window(self):
-        pass
-
-
-
-
 class clients(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
         self.top = ttk.LabelFrame(self, text = "Clients")
-        self.top.pack(fill = tk.BOTH)
+
+        self.top.pack(fill = tk.BOTH, padx = 20, pady = 20)
         self.middle = ttk.LabelFrame(self, text = "Bookings")
-        self.middle.pack(fill = tk.BOTH)
+        self.middle.pack(fill = tk.BOTH, padx = 20, pady = 20)
         self.bottom = ttk.LabelFrame(self)
+        self.bottom.pack(fill = tk.BOTH, padx = 20, pady = 20)
 
         self.trv_clients = ttk.Treeview(self.top, columns = (1, 2, 3, 4, 5), show = "headings")
         self.trv_clients.pack(fill = tk.BOTH, expand = tk.TRUE)
@@ -85,14 +70,15 @@ class clients(tk.Frame):
         self.trv_clients.heading(5, text = "Phone Number")
 
 
-        self.trv_bookings = ttk.Treeview(self.middle, columns=(1,2,3,4,5), show="headings", height="5")
+        self.trv_bookings = ttk.Treeview(self.middle, columns=(1,2,3,4,5,6), show="headings", height="5")
         self.trv_bookings.pack(expand = tk.TRUE, fill = tk.BOTH, side = tk.BOTTOM)
 
-        self.trv_bookings.heading(1, text="Service")
-        self.trv_bookings.heading(2, text="Booking Date")
-        self.trv_bookings.heading(3, text="First Name")
-        self.trv_bookings.heading(4, text="Last Name")
-        self.trv_bookings.heading(5, text="Date of Birth")
+        self.trv_bookings.heading(1, text="Booking ID")
+        self.trv_bookings.heading(2, text="Service")
+        self.trv_bookings.heading(3, text="Booking Date")
+        self.trv_bookings.heading(4, text="Client ID")
+        self.trv_bookings.heading(5, text="Last Name")
+        self.trv_bookings.heading(6, text="Date of Birth")
 
 
         self.selected = []
@@ -109,18 +95,24 @@ class clients(tk.Frame):
         self.trv_bookings.bind('<Double-Button>', self.manage_booking_window)
 
 
-        btn_add_client = ttk.Button(self, text="Add Client",
+        btn_add_client = ttk.Button(self.bottom, text="Add Client",
                                        command=self.add_client_window)
-        btn_add_client.pack()
+        btn_add_client.pack(side = tk.LEFT)
 
-        btn_add_booking = ttk.Button(self, text="Add a booking", command=self.add_booking_window)
+        btn_add_booking = ttk.Button(self.bottom, text="Add a booking", command=self.add_booking_window)
         btn_add_booking.pack()
 
         self.populate_clients()
         self.populate_bookings()
 
-    def manage_booking_window(self):
-        pass
+    def manage_booking_window(self, event):
+        pop_manage_booking_window = tk.Toplevel(self)
+
+        lbl_service = ttk.Label(pop_manage_booking_window, text = "Service")
+        lbl_service.pack()
+
+        # fill service info!?!?!?!?!?
+
 
     def add_booking_window(self):
         self.pop_add_booking_window = tk.Toplevel(self)
@@ -180,17 +172,51 @@ class clients(tk.Frame):
 
         self.fill_pop()
 
+
     def populate_clients(self):
         for item in self.trv_clients.get_children():
-            self.trv.delete(item)
+            self.trv_clients.delete(item)
         for i in db.get_clients():
             self.trv_clients.insert('', 'end', values = i)
 
     def populate_bookings(self):
         for item in self.trv_bookings.get_children():
-            self.trv.delete(item)
-        for i in db.get_bookings():
+            self.trv_bookings.delete(item)
+        for i in self.package_bookings():
             self.trv_bookings.insert('', 'end', values = i)
+
+    def package_bookings(self):
+        raw_data = db.get_bookings()
+        id = [i[0] for i in raw_data]
+        service = [i[1] for i in raw_data]
+        booking_date = [i[2] for i in raw_data]
+        client = [i[3] for i in raw_data]
+        service_out = list()
+        lastname_out = list()
+        dob_out = list()
+        for i in range(0, len(service)):
+            x = db.get_service_name(service[i])
+            service_out.append(x)
+        for i in range(0, len(client)):
+            x = db.get_client_lastname(client[i])
+            lastname_out.append(x)
+            z = db.get_client_dob(client[i])
+            dob_out.append(z)
+
+        print(service_out)
+        print(lastname_out)
+        print(dob_out)
+        print(booking_date)
+
+        def convert(list):
+            return tuple(list)
+
+        client_id = (convert(client))
+
+        out = (list(zip(id, service_out, booking_date, client_id, lastname_out, dob_out)))
+
+        return out
+
 
 
 
@@ -205,7 +231,6 @@ class clients(tk.Frame):
                           client_id)
 
         print(self.get_key(self.drop_service_value.get()), self.date_pick_callback(), client_id)
-
 
     def get_key(self, picked):
         dic = self.dictionary_convert()
@@ -236,7 +261,6 @@ class clients(tk.Frame):
                          self.phone_text.get())
         self.fill_pop()
 
-
     def cbut_editing_callback(self):
         if self.cbut_editing_value.get() == 0:
             self.ent_firstname.config(state='disabled')
@@ -249,8 +273,6 @@ class clients(tk.Frame):
             self.ent_dob.config(state='normal')
             self.ent_phone.config(state='normal')
 
-
-
     def fill_pop(self):
         self.ent_firstname.delete(0, tk.END)
         self.ent_firstname.insert(tk.END, self.selected[1])
@@ -263,12 +285,10 @@ class clients(tk.Frame):
         # runs so start disabled - tried putting this with definition of checkbox, but if it was disabled here then the data would never be able to get in.
         self.cbut_editing_callback()
 
-
     def cur_select(self, event):
         self.selected = self.listbox.get(int(self.listbox.curselection()[0]))
         print(self.selected)
         print(type(self))
-
 
     def search(self, event):
         typed = self.ent_search.get()
@@ -281,12 +301,10 @@ class clients(tk.Frame):
                     data.append(row)
         self.update(data)
 
-
     def update(self, data):
         self.listbox.delete(0, tk.END)
         for row in data:
             self.listbox.insert(tk.END, row)
-
 
     def fill_pop(self):
         self.ent_firstname.delete(0, tk.END)
@@ -300,8 +318,6 @@ class clients(tk.Frame):
         # runs so start disabled - tried putting this with definition of checkbox, but if it was disabled here then the data would never be able to get in.
         self.cbut_editing_callback()
 
-
-
     def get_selection_client(self, event):
         # row id of treeview
         selected_item = self.trv_clients.focus()
@@ -312,7 +328,7 @@ class clients(tk.Frame):
 
     def get_selection_booking(self, event):
         # row id of treeview
-        selected_item = self.trv_bookinsg.focus()
+        selected_item = self.trv_bookings.focus()
         data = self.trv_bookings.item(selected_item)
         # converts to the data at row id
         self.selected = data.get("values")
@@ -359,7 +375,6 @@ class clients(tk.Frame):
 
         self.fill_pop()
 
-
     def add_client_window(self):
         self.pop_add_client_window = tk.Toplevel(self)
 
@@ -393,7 +408,6 @@ class clients(tk.Frame):
                                           command=self.add_client_callback)
         self.btn_add_client.pack()
 
-
     def date_pick_callback(self):
         self.picked_date = self.date.get_date()
         return self.picked_date
@@ -403,7 +417,7 @@ class clients(tk.Frame):
                          self.lastname_text.get(),
                          self.date_pick_callback(),
                          self.phone_text.get())
-        self.populate_trv()
+        self.populate_clients()
 
     def update_client_callback(self):
         print(self.selected)
@@ -413,7 +427,6 @@ class clients(tk.Frame):
                          self.dob_text.get(),
                          self.phone_text.get())
         self.fill_pop()
-
 
     def cbut_editing_callback(self):
         if self.cbut_editing_value.get() == 0:
@@ -427,14 +440,11 @@ class clients(tk.Frame):
             self.ent_dob.config(state='normal')
             self.ent_phone.config(state='normal')
 
-
-
     def insert_trv(self, data):
         for item in self.trv.get_children():
             self.trv.delete(item)
         for row in data:
             self.trv.insert('', 'end', values = data)
-
 
     def search_clients(self, event):
         typed = self.ent_search.get()
@@ -449,39 +459,7 @@ class clients(tk.Frame):
 
 
 
-    # def cur_select(self, event):
-    #     self.selected = self.listbox.get(int(self.listbox.curselection()[0]))
-    #
-    #     self.ent_firstname.delete(0, tk.END)
-    #     self.ent_firstname.insert(tk.END, self.selected[1])
-    #     self.ent_lastname.delete(0, tk.END)
-    #     self.ent_lastname.insert(tk.END, self.selected[2])
-    #     self.ent_dob.delete(0, tk.END)
-    #     self.ent_dob.insert(tk.END, self.selected[3])
-    #     self.ent_phone.delete(0, tk.END)
-    #     self.ent_phone.insert(tk.END, self.selected[4])
-    #
-    #
-    # def add_callback(self):
-    #     db.insert_client(self.firstname_text.get(),
-    #                      self.lastname_text.get(),
-    #                      self.dob_text.get(),
-    #                      self.phone_text.get())
-    #     self.listbox.delete(0, tk.END)
-    #     self.listbox.insert(tk.END, (self.firstname_text.get(),
-    #                                  self.lastname_text.get(),
-    #                                  self.dob_text.get(),
-    #                                  self.phone_text.get()))
 
-    def view_callback(self):
-        self.listbox.delete(0, tk.END)
-        for row in db.get_clients():
-            self.listbox.insert(tk.END, row)
-    #
-    # def delete_callback(self):
-    #     db.delete_client(self.selected[0])
-    #     self.view_callback()
-    #
     # def update_client(self):
     #     print(self.selected)
     #     db.update_client(self.selected[0],
@@ -519,6 +497,23 @@ class Db():
         self.conn.commit()
         return rows
 
+
+    def get_client_lastname(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT lastName from client WHERE id=?",(id,))
+        lastname = self.cur.fetchall()
+        self.conn.commit()
+        return lastname
+
+    def get_client_dob(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT dob from client WHERE id=?", (id,))
+        dob = self.cur.fetchall()
+        self.conn.commit()
+        return dob
+
     def get_services(self):
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
@@ -526,6 +521,15 @@ class Db():
         services = self.cur.fetchall()
         self.conn.commit()
         return services
+
+    def get_service_name(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT service from service WHERE id=?",(id))
+        services_name = self.cur.fetchall()
+        self.conn.commit()
+        return services_name
+
 
     def get_bookings(self):
         self.conn = sqlite3.connect("clients.db")
