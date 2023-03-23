@@ -16,12 +16,12 @@ class App(tk.Tk):
 
         self.frames = {}
 
-        for f in (bookings, clients):
+        for f in (bookings, main):
             frame = f(container, self)
             self.frames[f] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(clients)
+        self.show_frame(main)
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -48,19 +48,19 @@ class bookings(tk.Frame):
 
 
 
-class clients(tk.Frame):
+class main(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        self.top = ttk.LabelFrame(self, text = "Clients")
+        top = ttk.LabelFrame(self, text = "Clients")
 
-        self.top.pack(fill = tk.BOTH, padx = 20, pady = 20)
-        self.middle = ttk.LabelFrame(self, text = "Bookings")
-        self.middle.pack(fill = tk.BOTH, padx = 20, pady = 20)
-        self.bottom = ttk.LabelFrame(self)
-        self.bottom.pack(fill = tk.BOTH, padx = 20, pady = 20)
+        top.pack(fill = tk.BOTH, padx = 20, pady = 20)
+        middle = ttk.LabelFrame(self, text = "Bookings")
+        middle.pack(fill = tk.BOTH, padx = 20, pady = 20)
+        bottom = ttk.LabelFrame(self)
+        bottom.pack(fill = tk.BOTH, padx = 20, pady = 20)
 
-        self.trv_clients = ttk.Treeview(self.top, columns = (1, 2, 3, 4, 5), show = "headings")
+        self.trv_clients = ttk.Treeview(top, columns = (1, 2, 3, 4, 5), show = "headings")
         self.trv_clients.pack(fill = tk.BOTH, expand = tk.TRUE)
 
         self.trv_clients.heading(1, text = "ID")
@@ -70,7 +70,7 @@ class clients(tk.Frame):
         self.trv_clients.heading(5, text = "Phone Number")
 
 
-        self.trv_bookings = ttk.Treeview(self.middle, columns=(1,2,3,4,5,6), show="headings", height="5")
+        self.trv_bookings = ttk.Treeview(middle, columns=(1,2,3,4,5,6), show="headings", height="5")
         self.trv_bookings.pack(expand = tk.TRUE, fill = tk.BOTH, side = tk.BOTTOM)
 
         self.trv_bookings.heading(1, text="Booking ID")
@@ -95,15 +95,51 @@ class clients(tk.Frame):
         self.trv_bookings.bind('<Double-Button>', self.manage_booking_window)
 
 
-        btn_add_client = ttk.Button(self.bottom, text="Add Client",
-                                       command=self.add_client_window)
+        btn_add_client = ttk.Button(bottom, text = "Add Client",
+                                       command = self.add_client_window)
         btn_add_client.pack(side = tk.LEFT)
 
-        btn_add_booking = ttk.Button(self.bottom, text="Add a booking", command=self.add_booking_window)
-        btn_add_booking.pack()
+        btn_delete_client = ttk.Button(bottom, text = "Delete Client", command = self.client_deletion_callback)
+        btn_delete_client.pack()
+
+        btn_add_booking = ttk.Button(bottom, text="Add a booking", command = self.add_booking_window)
+        btn_add_booking.pack(side = tk.LEFT)
+
+        btn_delete_booking = ttk.Button(bottom, text="Delete a booking", command = self.delete_booking_callback)
+        btn_delete_booking.pack()
+
+        ent_search_client = ttk.Button(bottom)
 
         self.populate_clients()
         self.populate_bookings()
+
+    def delete_booking_callback(self):
+        db.delete_booking(self.selected[0])
+        self.populate_bookings()
+    
+
+    def client_deletion_callback(self):
+        are_you_sure = tk.Toplevel(self)
+        lbl = ttk.Label(are_you_sure, text = "Are you sure!?!!?!? THERES NO GOING BANCK!!!!!!")
+        lbl.pack()
+        btn_yes = ttk.Button(are_you_sure, text = "Yes", command = self.delete_client)
+        btn_yes.pack()
+        btn_no = ttk.Button(are_you_sure, text = "No")
+        btn_no.pack()
+
+        # ENFORCE REFERENTIAL INTEGRITY!!!!!!!!!
+
+    def delete_client(self):
+        db.delete_client(self.selected[0])
+        # self.referential_integrity()
+        self.populate_clients()
+
+    def referential_integrity(self):
+        db.referential_integrity(self.selected[0])
+        self.populate_bookings()
+
+
+
 
     def manage_booking_window(self, event):
         pop_manage_booking_window = tk.Toplevel(self)
@@ -115,16 +151,16 @@ class clients(tk.Frame):
 
 
     def add_booking_window(self):
-        self.pop_add_booking_window = tk.Toplevel(self)
+        pop_add_booking_window = tk.Toplevel(self)
 
-        lbl_firstname = ttk.Label(self.pop_add_booking_window, text="First Name")
-        self.ent_firstname = tk.Entry(self.pop_add_booking_window, textvariable=self.firstname_text)
-        lbl_lastname = ttk.Label(self.pop_add_booking_window, text="Last Name")
-        self.ent_lastname = tk.Entry(self.pop_add_booking_window, textvariable=self.lastname_text)
-        lbl_dob = ttk.Label(self.pop_add_booking_window, text="Date of Birth")
-        self.ent_dob = tk.Entry(self.pop_add_booking_window, textvariable=self.dob_text)
-        lbl_phone = ttk.Label(self.pop_add_booking_window, text="Phone Number")
-        self.ent_phone = tk.Entry(self.pop_add_booking_window, textvariable=self.phone_text)
+        lbl_firstname = ttk.Label(pop_add_booking_window, text="First Name")
+        self.ent_firstname = tk.Entry(pop_add_booking_window, textvariable=self.firstname_text)
+        lbl_lastname = ttk.Label(pop_add_booking_window, text="Last Name")
+        self.ent_lastname = tk.Entry(pop_add_booking_window, textvariable=self.lastname_text)
+        lbl_dob = ttk.Label(pop_add_booking_window, text="Date of Birth")
+        self.ent_dob = tk.Entry(pop_add_booking_window, textvariable=self.dob_text)
+        lbl_phone = ttk.Label(pop_add_booking_window, text="Phone Number")
+        self.ent_phone = tk.Entry(pop_add_booking_window, textvariable=self.phone_text)
 
         lbl_firstname.pack()
         self.ent_firstname.pack()
@@ -139,33 +175,33 @@ class clients(tk.Frame):
         self.ent_phone.pack()
 
         self.cbut_editing_value = tk.IntVar(value=0)
-        self.cbut_editing = tk.Checkbutton(self.pop_add_booking_window,
+        cbut_editing = tk.Checkbutton(pop_add_booking_window,
                                            text = "Enable Editing",
                                            variable = self.cbut_editing_value,
                                            onvalue = 1,
                                            offvalue = 0,
                                            command = self.cbut_editing_callback)
-        self.cbut_editing.pack()
+        cbut_editing.pack()
 
-        self.btn_update = ttk.Button(self.pop_add_booking_window,
+        btn_update = ttk.Button(pop_add_booking_window,
                                      text="Update selected",
                                      width=12,
                                      command=self.update_client_callback)
-        self.btn_update.pack()
+        btn_update.pack()
 
-        self.btn_add_booking = ttk.Button(self.pop_add_booking_window,
+        btn_add_booking = ttk.Button(pop_add_booking_window,
                                           text="Add a booking",
                                           width=12,
                                           command=self.add_booking_callback)
-        self.btn_add_booking.pack()
+        btn_add_booking.pack()
 
         self.drop_service_value = tk.StringVar(self)
-        self.drop_service = tk.OptionMenu(self.pop_add_booking_window,
+        drop_service = tk.OptionMenu(pop_add_booking_window,
                                           self.drop_service_value,
                                           *self.get_value())
-        self.drop_service.pack()
+        drop_service.pack()
 
-        self.date = Calendar(self.pop_add_booking_window, selectmode='day')
+        self.date = Calendar(pop_add_booking_window, selectmode='day')
         self.date.pack()
 
         self.get_value()
@@ -232,6 +268,8 @@ class clients(tk.Frame):
 
         print(self.get_key(self.drop_service_value.get()), self.date_pick_callback(), client_id)
 
+        self.populate_bookings()
+
     def get_key(self, picked):
         dic = self.dictionary_convert()
         self.key_list = list(dic.keys())
@@ -291,7 +329,7 @@ class clients(tk.Frame):
         print(type(self))
 
     def search(self, event):
-        typed = self.ent_search.get()
+        typed   = self.ent_search.get()
         if typed == '':
             data = db.get_clients()
         else:
@@ -457,20 +495,6 @@ class clients(tk.Frame):
                     data.append(row)
         self.insert_trv(data)
 
-
-
-
-    # def update_client(self):
-    #     print(self.selected)
-    #     db.update_client(self.selected[0],
-    #                      self.firstname_text.get(),
-    #                      self.lastname_text.get(),
-    #                      self.dob_text.get(),
-    #                      self.phone_text.get())
-    #     self.view_callback()
-
-
-
 class Db():
     def __init__(self):
         self.conn = sqlite3.connect("clients.db")
@@ -497,6 +521,11 @@ class Db():
         self.conn.commit()
         return rows
 
+    def referential_integrity(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("DELETE FROM booking WHERE booking_id=?",(id,))
+        self.conn.commit()
 
     def get_client_lastname(self, id):
         self.conn = sqlite3.connect("clients.db")
@@ -538,6 +567,14 @@ class Db():
         rows = self.cur.fetchall()
         self.conn.commit()
         return rows
+
+
+    def delete_booking(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("DELETE FROM booking WHERE id=?", (id,))
+        self.conn.commit()
+
 
     def delete_client(self, id):
         self.conn = sqlite3.connect("clients.db")
