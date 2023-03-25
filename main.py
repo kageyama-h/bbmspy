@@ -39,7 +39,7 @@ class bookings(tk.Frame):
         self.top_frame = tk.Frame()
         self.top_frame.pack(fill = tk.BOTH, side = tk.TOP)
 
-        btn_clients = ttk.Button(self.top_frame, text="Clients", command=lambda: controller.show_frame(clients))
+        btn_clients = ttk.Button(self.top_frame, text="Clients", command=lambda: controller.show_frame(main))
         btn_clients.pack(side = tk.LEFT)
 
 
@@ -108,7 +108,8 @@ class main(tk.Frame):
         btn_delete_booking = ttk.Button(bottom, text="Delete a booking", command = self.delete_booking_callback)
         btn_delete_booking.pack()
 
-        ent_search_client = ttk.Button(bottom)
+        ent_search_client = ttk.Entry(bottom)
+        ent_search_client.pack()
 
         self.populate_clients()
         self.populate_bookings()
@@ -127,17 +128,10 @@ class main(tk.Frame):
         btn_no = ttk.Button(are_you_sure, text = "No")
         btn_no.pack()
 
-        # ENFORCE REFERENTIAL INTEGRITY!!!!!!!!!
 
     def delete_client(self):
         db.delete_client(self.selected[0])
-        # self.referential_integrity()
         self.populate_clients()
-
-    def referential_integrity(self):
-        db.referential_integrity(self.selected[0])
-        self.populate_bookings()
-
 
 
 
@@ -329,7 +323,7 @@ class main(tk.Frame):
         print(type(self))
 
     def search(self, event):
-        typed   = self.ent_search.get()
+        typed = self.ent_search.get()
         if typed == '':
             data = db.get_clients()
         else:
@@ -521,11 +515,6 @@ class Db():
         self.conn.commit()
         return rows
 
-    def referential_integrity(self, id):
-        self.conn = sqlite3.connect("clients.db")
-        self.cur = self.conn.cursor()
-        self.cur.execute("DELETE FROM booking WHERE booking_id=?",(id,))
-        self.conn.commit()
 
     def get_client_lastname(self, id):
         self.conn = sqlite3.connect("clients.db")
