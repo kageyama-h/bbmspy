@@ -53,12 +53,17 @@ class main(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         top = ttk.LabelFrame(self, text = "Clients")
-
         top.pack(fill = tk.BOTH, padx = 20, pady = 20)
         middle = ttk.LabelFrame(self, text = "Bookings")
         middle.pack(fill = tk.BOTH, padx = 20, pady = 20)
         bottom = ttk.LabelFrame(self)
         bottom.pack(fill = tk.BOTH, padx = 20, pady = 20)
+
+        bottom_left = ttk.Frame(bottom)
+        bottom_left.pack(side = tk.LEFT)
+        bottom_right = ttk.Frame(bottom)
+        bottom_right.pack(side = tk.RIGHT)
+
 
         self.trv_clients = ttk.Treeview(top, columns = (1, 2, 3, 4, 5), show = "headings")
         self.trv_clients.pack(fill = tk.BOTH, expand = tk.TRUE)
@@ -70,8 +75,8 @@ class main(tk.Frame):
         self.trv_clients.heading(5, text = "Phone Number")
 
 
-        self.trv_bookings = ttk.Treeview(middle, columns=(1,2,3,4,5,6), show="headings", height="5")
-        self.trv_bookings.pack(expand = tk.TRUE, fill = tk.BOTH, side = tk.BOTTOM)
+        self.trv_bookings = ttk.Treeview(middle, columns=(1,2,3,4,5,6), show="headings")
+        self.trv_bookings.pack(expand = tk.TRUE, fill = tk.BOTH)
 
         self.trv_bookings.heading(1, text="Booking ID")
         self.trv_bookings.heading(2, text="Service")
@@ -95,18 +100,21 @@ class main(tk.Frame):
         self.trv_bookings.bind('<Double-Button>', self.manage_booking_window)
 
 
-        btn_add_client = ttk.Button(bottom, text = "Add Client",
+        btn_add_client = ttk.Button(bottom_left, text = "Add Client",
                                        command = self.add_client_window)
-        btn_add_client.pack(side = tk.LEFT)
+        btn_add_client.pack(fill = tk.BOTH)
 
-        btn_delete_client = ttk.Button(bottom, text = "Delete Client", command = self.client_deletion_callback)
-        btn_delete_client.pack()
+        btn_delete_client = ttk.Button(bottom_right, text = "Delete Client", command = self.client_deletion_callback)
+        btn_delete_client.pack(fill = tk.BOTH)
 
-        btn_add_booking = ttk.Button(bottom, text="Add a booking", command = self.add_booking_window)
-        btn_add_booking.pack(side = tk.LEFT)
+        btn_add_booking = ttk.Button(bottom_left, text="Add a booking", command = self.add_booking_window)
+        btn_add_booking.pack(fill = tk.BOTH)
 
-        btn_delete_booking = ttk.Button(bottom, text="Delete a booking", command = self.delete_booking_callback)
-        btn_delete_booking.pack()
+        btn_delete_booking = ttk.Button(bottom_right, text="Delete a booking", command = self.delete_booking_callback)
+        btn_delete_booking.pack(fill = tk.BOTH)
+
+        lbl_search = ttk.Label(bottom, text = "Search")
+        lbl_search.pack()
 
         ent_search_client = ttk.Entry(bottom)
         ent_search_client.pack()
@@ -141,7 +149,7 @@ class main(tk.Frame):
         lbl_service = ttk.Label(pop_manage_booking_window, text = "Service")
         lbl_service.pack()
 
-        # fill service info!?!?!?!?!?
+
 
 
     def add_booking_window(self):
@@ -200,7 +208,7 @@ class main(tk.Frame):
 
         self.get_value()
 
-        self.fill_pop()
+        self.fill_client_data()
 
 
     def populate_clients(self):
@@ -238,12 +246,7 @@ class main(tk.Frame):
         print(dob_out)
         print(booking_date)
 
-        def convert(list):
-            return tuple(list)
-
-        client_id = (convert(client))
-
-        out = (list(zip(id, service_out, booking_date, client_id, lastname_out, dob_out)))
+        out = (list(zip(id, service_out, booking_date, client, lastname_out, dob_out)))
 
         return out
 
@@ -284,14 +287,6 @@ class main(tk.Frame):
         return out
 
 
-    def update_client_callback(self):
-        print(self.selected)
-        db.update_client(self.selected[0],
-                         self.firstname_text.get(),
-                         self.lastname_text.get(),
-                         self.dob_text.get(),
-                         self.phone_text.get())
-        self.fill_pop()
 
     def cbut_editing_callback(self):
         if self.cbut_editing_value.get() == 0:
@@ -305,7 +300,7 @@ class main(tk.Frame):
             self.ent_dob.config(state='normal')
             self.ent_phone.config(state='normal')
 
-    def fill_pop(self):
+    def fill_client_data(self):
         self.ent_firstname.delete(0, tk.END)
         self.ent_firstname.insert(tk.END, self.selected[1])
         self.ent_lastname.delete(0, tk.END)
@@ -314,13 +309,10 @@ class main(tk.Frame):
         self.ent_dob.insert(tk.END, self.selected[3])
         self.ent_phone.delete(0, tk.END)
         self.ent_phone.insert(tk.END, self.selected[4])
-        # runs so start disabled - tried putting this with definition of checkbox, but if it was disabled here then the data would never be able to get in.
+
+
         self.cbut_editing_callback()
 
-    def cur_select(self, event):
-        self.selected = self.listbox.get(int(self.listbox.curselection()[0]))
-        print(self.selected)
-        print(type(self))
 
     def search(self, event):
         typed = self.ent_search.get()
@@ -338,7 +330,7 @@ class main(tk.Frame):
         for row in data:
             self.listbox.insert(tk.END, row)
 
-    def fill_pop(self):
+    def fill_client_data(self):
         self.ent_firstname.delete(0, tk.END)
         self.ent_firstname.insert(tk.END, self.selected[1])
         self.ent_lastname.delete(0, tk.END)
@@ -347,7 +339,6 @@ class main(tk.Frame):
         self.ent_dob.insert(tk.END, self.selected[3])
         self.ent_phone.delete(0, tk.END)
         self.ent_phone.insert(tk.END, self.selected[4])
-        # runs so start disabled - tried putting this with definition of checkbox, but if it was disabled here then the data would never be able to get in.
         self.cbut_editing_callback()
 
     def get_selection_client(self, event):
@@ -367,16 +358,16 @@ class main(tk.Frame):
         print(self.selected)
 
     def manage_client_window(self, event):
-        self.pop_manage_client_window = tk.Toplevel(self)
+        pop_manage_client_window = tk.Toplevel(self)
 
-        lbl_firstname = ttk.Label(self.pop_manage_client_window, text="First Name")
-        self.ent_firstname = tk.Entry(self.pop_manage_client_window, textvariable=self.firstname_text)
-        lbl_lastname = ttk.Label(self.pop_manage_client_window, text="Last Name")
-        self.ent_lastname = tk.Entry(self.pop_manage_client_window, textvariable=self.lastname_text)
-        lbl_dob = ttk.Label(self.pop_manage_client_window, text="Date of Birth")
-        self.ent_dob = tk.Entry(self.pop_manage_client_window, textvariable=self.dob_text)
-        lbl_phone = ttk.Label(self.pop_manage_client_window, text="Phone Number")
-        self.ent_phone = tk.Entry(self.pop_manage_client_window, textvariable=self.phone_text)
+        lbl_firstname = ttk.Label(pop_manage_client_window, text="First Name")
+        self.ent_firstname = tk.Entry(pop_manage_client_window, textvariable=self.firstname_text)
+        lbl_lastname = ttk.Label(pop_manage_client_window, text="Last Name")
+        self.ent_lastname = tk.Entry(pop_manage_client_window, textvariable=self.lastname_text)
+        lbl_dob = ttk.Label(pop_manage_client_window, text="Date of Birth")
+        self.ent_dob = tk.Entry(pop_manage_client_window, textvariable=self.dob_text)
+        lbl_phone = ttk.Label(pop_manage_client_window, text="Phone Number")
+        self.ent_phone = tk.Entry(pop_manage_client_window, textvariable=self.phone_text)
 
         lbl_firstname.pack()
         self.ent_firstname.pack()
@@ -391,21 +382,21 @@ class main(tk.Frame):
         self.ent_phone.pack()
 
         self.cbut_editing_value = tk.IntVar(value=0)
-        self.cbut_editing = tk.Checkbutton(self.pop_manage_client_window,
+        cbut_editing = tk.Checkbutton(pop_manage_client_window,
                                            text="Enable Editing",
                                            variable=self.cbut_editing_value,
                                            onvalue=1,
                                            offvalue=0,
                                            command=self.cbut_editing_callback)
-        self.cbut_editing.pack()
+        cbut_editing.pack()
 
-        self.btn_update = ttk.Button(self.pop_manage_client_window,
+        btn_update = ttk.Button(pop_manage_client_window,
                                      text="Update selected",
                                      width=12,
                                      command=self.update_client_callback)
-        self.btn_update.pack()
+        btn_update.pack()
 
-        self.fill_pop()
+        self.fill_client_data()
 
     def add_client_window(self):
         self.pop_add_client_window = tk.Toplevel(self)
@@ -454,11 +445,11 @@ class main(tk.Frame):
     def update_client_callback(self):
         print(self.selected)
         db.update_client(self.selected[0],
-                         self.firstname_text.get(),
-                         self.lastname_text.get(),
-                         self.dob_text.get(),
-                         self.phone_text.get())
-        self.fill_pop()
+                         self.ent_firstname.get(),
+                         self.ent_lastname.get(),
+                         self.ent_dob.get(),
+                         self.ent_phone.get())
+        self.populate_clients()
 
     def cbut_editing_callback(self):
         if self.cbut_editing_value.get() == 0:
