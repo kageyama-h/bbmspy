@@ -104,23 +104,21 @@ class main(tk.Frame):
                                        command = self.add_client_window)
         btn_add_client.pack(fill = tk.BOTH)
 
+        btn_add_booking = ttk.Button(bottom_left, text = "Add a booking", command=self.add_booking_window)
+        btn_add_booking.pack(fill=tk.BOTH)
+
         btn_delete_client = ttk.Button(bottom_right, text = "Delete Client", command = self.client_deletion_callback)
         btn_delete_client.pack(fill = tk.BOTH)
 
-        btn_add_booking = ttk.Button(bottom_left, text="Add a booking", command = self.add_booking_window)
-        btn_add_booking.pack(fill = tk.BOTH)
-
-        btn_delete_booking = ttk.Button(bottom_right, text="Delete a booking", command = self.delete_booking_callback)
+        btn_delete_booking = ttk.Button(bottom_right, text = "Delete a booking", command = self.delete_booking_callback)
         btn_delete_booking.pack(fill = tk.BOTH)
 
-        lbl_search = ttk.Label(bottom, text = "Search")
-        lbl_search.pack()
-
-        ent_search_client = ttk.Entry(bottom)
-        ent_search_client.pack()
+        btn_manage_stock = ttk.Button(bottom, text = "Manage Stock", command = self.stock_window)
+        btn_manage_stock.pack()
 
         self.populate_clients()
         self.populate_bookings()
+
 
     def delete_booking_callback(self):
         db.delete_booking(self.selected[0])
@@ -128,13 +126,23 @@ class main(tk.Frame):
     
 
     def client_deletion_callback(self):
-        are_you_sure = tk.Toplevel(self)
-        lbl = ttk.Label(are_you_sure, text = "Are you sure!?!!?!? THERES NO GOING BANCK!!!!!!")
+        confirm_window = tk.Toplevel(self)
+
+        def exit():
+            confirm_window.destroy()
+            confirm_window.update()
+
+        def delete():
+            self.delete_client()
+            exit()
+
+        lbl = ttk.Label(confirm_window, text = "Are you sure?")
         lbl.pack()
-        btn_yes = ttk.Button(are_you_sure, text = "Yes", command = self.delete_client)
+        btn_yes = ttk.Button(confirm_window, text = "Yes", command = delete)
         btn_yes.pack()
-        btn_no = ttk.Button(are_you_sure, text = "No")
+        btn_no = ttk.Button(confirm_window, text = "No", command = exit)
         btn_no.pack()
+
 
 
     def delete_client(self):
@@ -252,13 +260,14 @@ class main(tk.Frame):
 
 
 
-
     def date_pick_callback(self):
         self.picked_date = self.date.get_date()
         return self.picked_date
 
+
     def add_booking_callback(self):
         client_id = self.selected[0]
+        self.service = self.get_key(self.drop_service_value.get())
         db.insert_booking(self.get_key(self.drop_service_value.get()),
                           self.date_pick_callback(),
                           client_id)
@@ -266,6 +275,93 @@ class main(tk.Frame):
         print(self.get_key(self.drop_service_value.get()), self.date_pick_callback(), client_id)
 
         self.populate_bookings()
+        self.stock_management()
+
+
+    def stock_window(self):
+        stock = tk.Toplevel(self)
+
+        lbl_gloves = ttk.Label(stock, text="Gloves")
+        lbl_gloves.pack()
+
+        self.gloves_val = tk.IntVar()
+        self.ent_gloves = ttk.Entry(stock, textvariable = self.gloves_val)
+        self.ent_gloves.pack()
+
+        lbl_gel = ttk.Label(stock, text="Gel")
+        lbl_gel.pack()
+
+        self.gel_val = tk.IntVar()
+        self.ent_gel = ttk.Entry(stock, textvariable = self.gel_val)
+        self.ent_gel.pack()
+
+
+        lbl_cream = ttk.Label(stock, text="Cream")
+        lbl_cream.pack()
+
+        self.cream_val = tk.IntVar()
+        self.ent_cream = ttk.Entry(stock, textvariable = self.cream_val)
+        self.ent_cream.pack()
+
+        lbl_serum = ttk.Label(stock, text="Serum")
+        lbl_serum.pack()
+
+        self.serum_val = tk.IntVar()
+        self.ent_serum = ttk.Entry(stock, textvariable = self.serum_val)
+        self.ent_serum.pack()
+
+        self.populate_stock()
+
+
+    def populate_stock(self):
+        self.ent_gloves.delete(0, tk.END)
+        self.ent_gloves.insert(tk.END, self.gloves_stock)
+        self.ent_gel.delete(0, tk.END)
+        self.ent_gel.insert(tk.END, self.gel_stock)
+        self.ent_cream.delete(0, tk.END)
+        self.ent_cream.insert(tk.END, self.cream_stock)
+        self.ent_serum.delete(0, tk.END)
+        self.ent_serum.insert(tk.END, self.serum_stock)
+
+    def stock_management(self):
+        raw_costs = db.get_service_cost()
+        raw_stock = db.get_stock()
+
+        raw_gloves = raw_stock[0]
+        raw_gel = raw_stock[1]
+        raw_cream = raw_stock[2]
+        raw_serum = raw_stock[3]
+
+        # had to get index 0 because they were empty tuples, not able to do math on them
+
+        self.gloves_stock = raw_gloves[0]
+        self.gel_stock = raw_gel[0]
+        self.cream_stock = raw_cream[0]
+        self.serum_stock = raw_serum[0]
+
+        print(raw_costs)
+
+        id = [i[0] for i in raw_costs]
+        gloves = [i[1] for i in raw_costs]
+        gel = [i[2] for i in raw_costs]
+        cream = [i[3] for i in raw_costs]
+        serum = [i[4] for i in raw_costs]
+
+        sel_gloves = gloves[self.service]
+        sel_gel = gel[self.service]
+        sel_cream = cream[self.service]
+        sel_serum = serum[self.service]
+
+        new_gloves = self.gloves_stock - sel_gloves
+        new_stock = self.gel_stock - sel_gel
+        new_cream = self.cream_stock - sel_cream
+        new_serum = self.serum_stock -sel_serum
+
+
+        db.set_stock(new_gloves, 1)
+        db.set_stock(new_stock, 2)
+        db.set_stock(new_cream, 3)
+        db.set_stock(new_serum, 4)
 
     def get_key(self, picked):
         dic = self.dictionary_convert()
@@ -314,16 +410,8 @@ class main(tk.Frame):
         self.cbut_editing_callback()
 
 
-    def search(self, event):
-        typed = self.ent_search.get()
-        if typed == '':
-            data = db.get_clients()
-        else:
-            data = []
-            for row in db.get_clients():
-                if typed in row:
-                    data.append(row)
-        self.update(data)
+
+
 
     def update(self, data):
         self.listbox.delete(0, tk.END)
@@ -356,6 +444,7 @@ class main(tk.Frame):
         # converts to the data at row id
         self.selected = data.get("values")
         print(self.selected)
+
 
     def manage_client_window(self, event):
         pop_manage_client_window = tk.Toplevel(self)
@@ -469,16 +558,6 @@ class main(tk.Frame):
         for row in data:
             self.trv.insert('', 'end', values = data)
 
-    def search_clients(self, event):
-        typed = self.ent_search.get()
-        if typed == '':
-            data = db.get_clients()
-        else:
-            data = []
-            for row in db.get_clients():
-                if typed in row:
-                    data.append(row)
-        self.insert_trv(data)
 
 class Db():
     def __init__(self):
@@ -531,6 +610,7 @@ class Db():
         self.conn.commit()
         return services
 
+
     def get_service_name(self, id):
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
@@ -547,6 +627,28 @@ class Db():
         rows = self.cur.fetchall()
         self.conn.commit()
         return rows
+
+    def get_service_cost(self):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT id, gloves, gel, cream, serum from service")
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
+    def get_stock(self):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT balance from stock")
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
+
+    def set_stock(self, balance, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("UPDATE stock SET balance = ? WHERE id = ?",(balance, id))
+        rows = self.cur.fetchall()
+        self.conn.commit()
 
 
     def delete_booking(self, id):
