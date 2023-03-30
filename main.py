@@ -104,16 +104,24 @@ class main(tk.Frame):
                                        command = self.add_client_window)
         btn_add_client.pack(fill = tk.BOTH)
 
-        btn_add_booking = ttk.Button(bottom_left, text = "Add a booking", command=self.add_booking_window)
+        btn_add_booking = ttk.Button(bottom_left,
+                                     text = "Add a booking",
+                                     command = self.add_booking_window)
         btn_add_booking.pack(fill=tk.BOTH)
 
-        btn_delete_client = ttk.Button(bottom_right, text = "Delete Client", command = self.client_deletion_callback)
+        btn_delete_client = ttk.Button(bottom_right,
+                                       text = "Delete Client",
+                                       command = self.client_deletion_callback)
         btn_delete_client.pack(fill = tk.BOTH)
 
-        btn_delete_booking = ttk.Button(bottom_right, text = "Delete a booking", command = self.delete_booking_callback)
+        btn_delete_booking = ttk.Button(bottom_right,
+                                        text = "Delete a booking",
+                                        command = self.delete_booking_callback)
         btn_delete_booking.pack(fill = tk.BOTH)
 
-        btn_manage_stock = ttk.Button(bottom, text = "Manage Stock", command = self.stock_window)
+        btn_manage_stock = ttk.Button(bottom,
+                                      text = "Manage Stock",
+                                      command = self.stock_window)
         btn_manage_stock.pack()
 
         self.populate_clients()
@@ -267,8 +275,9 @@ class main(tk.Frame):
 
     def add_booking_callback(self):
         client_id = self.selected[0]
-        self.service = self.get_key(self.drop_service_value.get())
-        db.insert_booking(self.get_key(self.drop_service_value.get()),
+        service = self.get_key(self.drop_service_value.get())
+        self.stock_management(service)
+        db.insert_booking(service,
                           self.date_pick_callback(),
                           client_id)
 
@@ -312,8 +321,19 @@ class main(tk.Frame):
 
         self.populate_stock()
 
+    def get_stock_balance(self):
+        raw_stock = db.get_stock_balance()
+        stock_dic = self.dictionary_convert(raw_stock)
+        print(stock_dic)
+
+        # write to variables for display based on dictionary key
+
+        # display name in UI based on id??
+
+
 
     def populate_stock(self):
+        self.get_stock_balance()
         self.ent_gloves.delete(0, tk.END)
         self.ent_gloves.insert(tk.END, self.gloves_stock)
         self.ent_gel.delete(0, tk.END)
@@ -323,34 +343,20 @@ class main(tk.Frame):
         self.ent_serum.delete(0, tk.END)
         self.ent_serum.insert(tk.END, self.serum_stock)
 
-    def stock_management(self):
+    def stock_management(self, service):
         raw_costs = db.get_service_cost()
-        raw_stock = db.get_stock()
-
-        raw_gloves = raw_stock[0]
-        raw_gel = raw_stock[1]
-        raw_cream = raw_stock[2]
-        raw_serum = raw_stock[3]
-
-        # had to get index 0 because they were empty tuples, not able to do math on them
-
-        self.gloves_stock = raw_gloves[0]
-        self.gel_stock = raw_gel[0]
-        self.cream_stock = raw_cream[0]
-        self.serum_stock = raw_serum[0]
-
-        print(raw_costs)
 
         id = [i[0] for i in raw_costs]
         gloves = [i[1] for i in raw_costs]
         gel = [i[2] for i in raw_costs]
         cream = [i[3] for i in raw_costs]
         serum = [i[4] for i in raw_costs]
-
-        sel_gloves = gloves[self.service]
-        sel_gel = gel[self.service]
-        sel_cream = cream[self.service]
-        sel_serum = serum[self.service]
+        print(service)
+        print(gloves)
+        sel_gloves = gloves[service]
+        sel_gel = gel[service]
+        sel_cream = cream[service]
+        sel_serum = serum[service]
 
         new_gloves = self.gloves_stock - sel_gloves
         new_stock = self.gel_stock - sel_gel
@@ -372,14 +378,14 @@ class main(tk.Frame):
         return(self.key_list[position])
 
     def get_value(self):
-        i = self.dictionary_convert()
+        data = db.get_services()
+        i = self.dictionary_convert(data)
         x = i.values()
         return x
 
 
-    def dictionary_convert(self):
-        services = db.get_services()
-        out = dict((x, y) for x, y in services)
+    def dictionary_convert(self, input):
+        out = dict((x, y) for x, y in input)
         return out
 
 
@@ -635,10 +641,10 @@ class Db():
         rows = self.cur.fetchall()
         self.conn.commit()
         return rows
-    def get_stock(self):
+    def get_stock_balance(self):
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
-        self.cur.execute("SELECT balance from stock")
+        self.cur.execute("SELECT id, balance from stock")
         rows = self.cur.fetchall()
         self.conn.commit()
         return rows
