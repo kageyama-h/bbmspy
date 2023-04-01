@@ -1,3 +1,4 @@
+import tkinter
 import tkinter as tk
 from tkinter import ttk
 from tkcalendar import Calendar
@@ -51,6 +52,7 @@ class bookings(tk.Frame):
 class main(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
 
         top = ttk.LabelFrame(self, text = "Clients")
         top.pack(fill = tk.BOTH, padx = 20, pady = 20)
@@ -126,7 +128,8 @@ class main(tk.Frame):
 
         self.populate_clients()
         self.populate_bookings()
-
+        self.get_stock_balance()
+        print(self.stock_dic)
 
     def delete_booking_callback(self):
         db.delete_booking(self.selected[0])
@@ -275,102 +278,153 @@ class main(tk.Frame):
 
     def add_booking_callback(self):
         client_id = self.selected[0]
-        service = self.get_key(self.drop_service_value.get())
+        service = self.get_key(self.drop_service_value.get(), self.dictionary_convert(db.get_services()))
+        print(service)
         self.stock_management(service)
         db.insert_booking(service,
                           self.date_pick_callback(),
                           client_id)
 
-        print(self.get_key(self.drop_service_value.get()), self.date_pick_callback(), client_id)
 
         self.populate_bookings()
-        self.stock_management()
 
 
     def stock_window(self):
         stock = tk.Toplevel(self)
 
-        lbl_gloves = ttk.Label(stock, text="Gloves")
-        lbl_gloves.pack()
+        # this needs to be more dynamic, change widgets based on data rather than expecting data
 
-        self.gloves_val = tk.IntVar()
-        self.ent_gloves = ttk.Entry(stock, textvariable = self.gloves_val)
-        self.ent_gloves.pack()
+        lbl_1 = ttk.Label(stock, text="Gloves")
+        lbl_1.pack()
 
-        lbl_gel = ttk.Label(stock, text="Gel")
-        lbl_gel.pack()
+        self.ent_1_val = tk.IntVar()
+        self.ent_1 = ttk.Entry(stock, textvariable = self.ent_1_val)
+        self.ent_1.pack()
 
-        self.gel_val = tk.IntVar()
-        self.ent_gel = ttk.Entry(stock, textvariable = self.gel_val)
-        self.ent_gel.pack()
+        lbl_2 = ttk.Label(stock, text="Gel")
+        lbl_2.pack()
 
+        self.ent_2_val = tk.IntVar()
+        self.ent_2 = ttk.Entry(stock, textvariable = self.ent_2_val)
+        self.ent_2.pack()
 
-        lbl_cream = ttk.Label(stock, text="Cream")
-        lbl_cream.pack()
+        lbl_3 = ttk.Label(stock, text="Cream")
+        lbl_3.pack()
 
-        self.cream_val = tk.IntVar()
-        self.ent_cream = ttk.Entry(stock, textvariable = self.cream_val)
-        self.ent_cream.pack()
+        self.ent_3_val = tk.IntVar()
+        self.ent_3 = ttk.Entry(stock, textvariable = self.ent_3_val)
+        self.ent_3.pack()
 
-        lbl_serum = ttk.Label(stock, text="Serum")
-        lbl_serum.pack()
+        lbl_4 = ttk.Label(stock, text="Serum")
+        lbl_4.pack()
 
-        self.serum_val = tk.IntVar()
-        self.ent_serum = ttk.Entry(stock, textvariable = self.serum_val)
-        self.ent_serum.pack()
+        self.ent_4_val = tk.IntVar()
+        self.ent_4 = ttk.Entry(stock, textvariable = self.ent_4_val)
+        self.ent_4.pack()
+
+        btn_update = ttk.Button(stock, text = "Update", command = self.update_stock_callback)
+        btn_update.pack()
 
         self.populate_stock()
+        self.stock_check()
 
     def get_stock_balance(self):
         raw_stock = db.get_stock_balance()
-        stock_dic = self.dictionary_convert(raw_stock)
-        print(stock_dic)
-
-        # write to variables for display based on dictionary key
-
-        # display name in UI based on id??
-
+        print(raw_stock)
+        self.stock_dic = self.dictionary_convert(raw_stock)
+        print(self.stock_dic)
 
 
     def populate_stock(self):
+        print(1)
         self.get_stock_balance()
-        self.ent_gloves.delete(0, tk.END)
-        self.ent_gloves.insert(tk.END, self.gloves_stock)
-        self.ent_gel.delete(0, tk.END)
-        self.ent_gel.insert(tk.END, self.gel_stock)
-        self.ent_cream.delete(0, tk.END)
-        self.ent_cream.insert(tk.END, self.cream_stock)
-        self.ent_serum.delete(0, tk.END)
-        self.ent_serum.insert(tk.END, self.serum_stock)
+        self.ent_1.delete(0, tk.END)
+        self.ent_1.insert(tk.END, self.stock_dic.get(1))
+        self.ent_2.delete(0, tk.END)
+        self.ent_2.insert(tk.END, self.stock_dic.get(2))
+        self.ent_3.delete(0, tk.END)
+        self.ent_3.insert(tk.END, self.stock_dic.get(3))
+        self.ent_4.delete(0, tk.END)
+        self.ent_4.insert(tk.END, self.stock_dic.get(4))
+
+    def stock_warning_window(self, item):
+        stock_warning_window = tk.Toplevel(self)
+
+        lbl_warn = ttk.Label(stock_warning_window, text = "{} is a at critical stock level, consider replenishing".format(item))
+        lbl_warn.pack(fill = tk.BOTH, expand = tk.TRUE, padx=20, pady=20)
+
+    def update_stock_callback(self):
+        print(22)
+        db.set_stock(self.ent_1.get(), 1)
+        db.set_stock(self.ent_2.get(), 2)
+        db.set_stock(self.ent_3.get(), 3)
+        db.set_stock(self.ent_4.get(), 4)
+
+
+    def stock_check(self):
+        self.get_stock_balance()
+
+        print(self.stock_dic[1])
+        # need to write a query to get stock names for window based on id (key)
+
+        if self.stock_dic[1] < 95:
+            pass
+            # self.stock_warning_window(db.get_stock_name(self.get_key(1, self.stock_dic)))
+
+        if self.stock_dic[2] < 10:
+            self.stock_warning_window(self.stock_dic.get(2))
+
+        if self.stock_dic[3] < 10:
+            self.stock_warning_window(self.stock_dic.get(3))
+
+        if self.stock_dic[4] < 10:
+            self.stock_warning_window(self.stock_dic.get(4))
+
 
     def stock_management(self, service):
-        raw_costs = db.get_service_cost()
+        # ensure updated values are present by running here
+        self.get_stock_balance()
+        raw_stock_costs = db.get_stock_costs()
+        print(raw_stock_costs)
 
-        id = [i[0] for i in raw_costs]
-        gloves = [i[1] for i in raw_costs]
-        gel = [i[2] for i in raw_costs]
-        cream = [i[3] for i in raw_costs]
-        serum = [i[4] for i in raw_costs]
-        print(service)
-        print(gloves)
-        sel_gloves = gloves[service]
-        sel_gel = gel[service]
-        sel_cream = cream[service]
-        sel_serum = serum[service]
+        # WRITE THIS SO THAT IF INDEX DOES'NT EXIST IT STILL WORKS LOL
 
-        new_gloves = self.gloves_stock - sel_gloves
-        new_stock = self.gel_stock - sel_gel
-        new_cream = self.cream_stock - sel_cream
-        new_serum = self.serum_stock -sel_serum
+        if service == 3:
+            values = result = [i for i in raw_stock_costs if i[1] == 3]
+            stock_1 = [i[1] for i in values if i[0] == 1][0]
+            stock_2 = [i[1] for i in values if i[0] == 2][0]
+            stock_3 = [i[1] for i in values if i[0] == 3][0]
+            stock_4 = [i[1] for i in values if i[0] == 4][0]
+            new_stock_1 = self.stock_dic[1] - stock_1
+            new_stock_2 = self.stock_dic[2] - stock_2
+            new_stock_3 = self.stock_dic[3] - stock_3
+            new_stock_4 = self.stock_dic[4] - stock_4
+
+            self.set_stock(new_stock_1, new_stock_2, new_stock_3, new_stock_4)
+
+        if service == 4:
+            values = result = [i for i in raw_stock_costs if i[1] == 4]
+            stock_1 = [i[1] for i in values if i[0] == 1][0]
+            stock_2 = [i[1] for i in values if i[0] == 2][0]
+            stock_3 = [i[1] for i in values if i[0] == 3][0]
+            stock_4 = [i[1] for i in values if i[0] == 4][0]
+            new_stock_1 = self.stock_dic[1] - stock_1
+            new_stock_2 = self.stock_dic[2] - stock_2
+            new_stock_3 = self.stock_dic[3] - stock_3
+            new_stock_4 = self.stock_dic[4] - stock_4
+
+            self.set_stock(new_stock_1, new_stock_2, new_stock_3, new_stock_4)
 
 
-        db.set_stock(new_gloves, 1)
-        db.set_stock(new_stock, 2)
-        db.set_stock(new_cream, 3)
-        db.set_stock(new_serum, 4)
 
-    def get_key(self, picked):
-        dic = self.dictionary_convert()
+    def set_stock(self, item_1, item_2, item_3, item_4):
+        print(item_1, item_2, item_3, item_4)
+        db.set_stock(item_1, 1)
+        db.set_stock(item_2, 2)
+        db.set_stock(item_3, 3)
+        db.set_stock(item_4, 4)
+
+    def get_key(self, picked, dic):
         self.key_list = list(dic.keys())
         self.value_list = list(dic.values())
 
@@ -414,10 +468,6 @@ class main(tk.Frame):
 
 
         self.cbut_editing_callback()
-
-
-
-
 
     def update(self, data):
         self.listbox.delete(0, tk.END)
@@ -655,6 +705,22 @@ class Db():
         self.cur.execute("UPDATE stock SET balance = ? WHERE id = ?",(balance, id))
         rows = self.cur.fetchall()
         self.conn.commit()
+
+    def get_stock_costs(self):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT stockID, serviceID, amount from stockCost")
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
+
+    def get_stock_name(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT stockName from stock WHERE id = ?",(id))
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
 
 
     def delete_booking(self, id):
