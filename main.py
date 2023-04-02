@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkcalendar import Calendar
 import sqlite3
-
+import re
 
 # inherits tkinter
 class App(tk.Tk):
@@ -126,10 +126,14 @@ class main(tk.Frame):
                                       command = self.stock_window)
         btn_manage_stock.pack()
 
+        btn_manage_crit_stock = ttk.Button(bottom,
+                                      text="Manage Stock Critical Levels",
+                                      command=self.stock_critical_window)
+        btn_manage_crit_stock.pack()
+
         self.populate_clients()
         self.populate_bookings()
         self.get_stock_balance()
-        print(self.stock_dic)
 
     def delete_booking_callback(self):
         db.delete_booking(self.selected[0])
@@ -260,10 +264,6 @@ class main(tk.Frame):
             z = db.get_client_dob(client[i])
             dob_out.append(z)
 
-        print(service_out)
-        print(lastname_out)
-        print(dob_out)
-        print(booking_date)
 
         out = (list(zip(id, service_out, booking_date, client, lastname_out, dob_out)))
 
@@ -279,7 +279,6 @@ class main(tk.Frame):
     def add_booking_callback(self):
         client_id = self.selected[0]
         service = self.get_key(self.drop_service_value.get(), self.dictionary_convert(db.get_services()))
-        print(service)
         self.stock_management(service)
         db.insert_booking(service,
                           self.date_pick_callback(),
@@ -289,33 +288,76 @@ class main(tk.Frame):
         self.populate_bookings()
 
 
+    def stock_critical_window(self):
+        stock_critical = tk.Toplevel(self)
+
+        lbl_title = ttk.Label(stock_critical, text = "UPDATE CRITICAL STOCK LEVELS")
+        lbl_title.pack(padx= 20, pady = 20)
+
+        lbl_1 = ttk.Label(stock_critical, text="{}".format(db.get_stock_name(2)[0][0]))
+        lbl_1.pack()
+
+        self.ent_crit_1_val = tk.IntVar()
+        self.ent_crit_1 = ttk.Entry(stock_critical, textvariable=self.ent_crit_1_val)
+        self.ent_crit_1.pack()
+
+        lbl_2 = ttk.Label(stock_critical, text="{}".format(db.get_stock_name(2)[0][0]))
+        lbl_2.pack()
+
+        self.ent_crit_2_val = tk.IntVar()
+        self.ent_crit_2 = ttk.Entry(stock_critical, textvariable=self.ent_crit_2_val)
+        self.ent_crit_2.pack()
+
+        lbl_3 = ttk.Label(stock_critical, text="{}".format(db.get_stock_name(3)[0][0]))
+        lbl_3.pack()
+
+        self.ent_crit_3_val = tk.IntVar()
+        self.ent_crit_3 = ttk.Entry(stock_critical, textvariable=self.ent_crit_3_val)
+        self.ent_crit_3.pack()
+
+        lbl_4 = ttk.Label(stock_critical, text="{}".format(db.get_stock_name(4)[0][0]))
+        lbl_4.pack()
+
+        self.ent_crit_4_val = tk.IntVar()
+        self.ent_crit_4 = ttk.Entry(stock_critical, textvariable=self.ent_crit_4_val)
+        self.ent_crit_4.pack()
+
+        btn_update = ttk.Button(stock_critical, text="Update", command=self.update_critical_callback)
+        btn_update.pack()
+
+    def update_critical_callback(self):
+        db.set_critical(self.ent_crit_1.get(), 1)
+        db.set_critical(self.ent_crit_2.get(), 2)
+        db.set_critical(self.ent_crit_3.get(), 3)
+        db.set_critical(self.ent_crit_4.get(), 4)
+
     def stock_window(self):
         stock = tk.Toplevel(self)
 
         # this needs to be more dynamic, change widgets based on data rather than expecting data
 
-        lbl_1 = ttk.Label(stock, text="Gloves")
+        lbl_1 = ttk.Label(stock, text="{}".format(db.get_stock_name(1)[0][0]))
         lbl_1.pack()
 
         self.ent_1_val = tk.IntVar()
         self.ent_1 = ttk.Entry(stock, textvariable = self.ent_1_val)
         self.ent_1.pack()
 
-        lbl_2 = ttk.Label(stock, text="Gel")
+        lbl_2 = ttk.Label(stock, text="{}".format(db.get_stock_name(2)[0][0]))
         lbl_2.pack()
 
         self.ent_2_val = tk.IntVar()
         self.ent_2 = ttk.Entry(stock, textvariable = self.ent_2_val)
         self.ent_2.pack()
 
-        lbl_3 = ttk.Label(stock, text="Cream")
+        lbl_3 = ttk.Label(stock, text="{}".format(db.get_stock_name(3)[0][0]))
         lbl_3.pack()
 
         self.ent_3_val = tk.IntVar()
         self.ent_3 = ttk.Entry(stock, textvariable = self.ent_3_val)
         self.ent_3.pack()
 
-        lbl_4 = ttk.Label(stock, text="Serum")
+        lbl_4 = ttk.Label(stock, text="{}".format(db.get_stock_name(4)[0][0]))
         lbl_4.pack()
 
         self.ent_4_val = tk.IntVar()
@@ -330,13 +372,10 @@ class main(tk.Frame):
 
     def get_stock_balance(self):
         raw_stock = db.get_stock_balance()
-        print(raw_stock)
         self.stock_dic = self.dictionary_convert(raw_stock)
-        print(self.stock_dic)
 
 
     def populate_stock(self):
-        print(1)
         self.get_stock_balance()
         self.ent_1.delete(0, tk.END)
         self.ent_1.insert(tk.END, self.stock_dic.get(1))
@@ -354,7 +393,6 @@ class main(tk.Frame):
         lbl_warn.pack(fill = tk.BOTH, expand = tk.TRUE, padx=20, pady=20)
 
     def update_stock_callback(self):
-        print(22)
         db.set_stock(self.ent_1.get(), 1)
         db.set_stock(self.ent_2.get(), 2)
         db.set_stock(self.ent_3.get(), 3)
@@ -364,37 +402,46 @@ class main(tk.Frame):
     def stock_check(self):
         self.get_stock_balance()
 
-        print(self.stock_dic[1])
-        # need to write a query to get stock names for window based on id (key)
 
-        if self.stock_dic[1] < 95:
-            pass
-            # self.stock_warning_window(db.get_stock_name(self.get_key(1, self.stock_dic)))
+        if self.stock_dic[1] < db.get_critical(1)[0][0]:
+            name = db.get_stock_name(1)
+            self.stock_warning_window(name[0][0])
 
-        if self.stock_dic[2] < 10:
-            self.stock_warning_window(self.stock_dic.get(2))
+        if self.stock_dic[2] < db.get_critical(2)[0][0]:
+            name = db.get_stock_name(2)
+            self.stock_warning_window(name[0][0])
 
-        if self.stock_dic[3] < 10:
-            self.stock_warning_window(self.stock_dic.get(3))
+        if self.stock_dic[3] < db.get_critical(3)[0][0]:
+            name = db.get_stock_name(3)
+            self.stock_warning_window(name[0][0])
 
-        if self.stock_dic[4] < 10:
-            self.stock_warning_window(self.stock_dic.get(4))
+        if self.stock_dic[4] < db.get_critical(4)[0][0]:
+            name = db.get_stock_name(4)
+            self.stock_warning_window(name[0][0])
+
 
 
     def stock_management(self, service):
         # ensure updated values are present by running here
         self.get_stock_balance()
         raw_stock_costs = db.get_stock_costs()
-        print(raw_stock_costs)
-
-        # WRITE THIS SO THAT IF INDEX DOES'NT EXIST IT STILL WORKS LOL
 
         if service == 3:
-            values = result = [i for i in raw_stock_costs if i[1] == 3]
-            stock_1 = [i[1] for i in values if i[0] == 1][0]
-            stock_2 = [i[1] for i in values if i[0] == 2][0]
-            stock_3 = [i[1] for i in values if i[0] == 3][0]
-            stock_4 = [i[1] for i in values if i[0] == 4][0]
+            values = [i for i in raw_stock_costs if i[1] == 3]
+            print(values)
+            for i in values:
+                if i[0] == 1:
+                    stock_1 = i[2]
+            for i in values:
+                if i[0] == 2:
+                    stock_2 = i[2]
+            for i in values:
+                if i[0] == 3:
+                    stock_3 = i[2]
+            for i in values:
+                if i[0] == 4:
+                    stock_4 = i[2]
+            print(stock_1, stock_2, stock_3, stock_4)
             new_stock_1 = self.stock_dic[1] - stock_1
             new_stock_2 = self.stock_dic[2] - stock_2
             new_stock_3 = self.stock_dic[3] - stock_3
@@ -403,11 +450,21 @@ class main(tk.Frame):
             self.set_stock(new_stock_1, new_stock_2, new_stock_3, new_stock_4)
 
         if service == 4:
-            values = result = [i for i in raw_stock_costs if i[1] == 4]
-            stock_1 = [i[1] for i in values if i[0] == 1][0]
-            stock_2 = [i[1] for i in values if i[0] == 2][0]
-            stock_3 = [i[1] for i in values if i[0] == 3][0]
-            stock_4 = [i[1] for i in values if i[0] == 4][0]
+            values = [i for i in raw_stock_costs if i[1] == 4]
+            print(values)
+            for i in values:
+                if i[0] == 1:
+                    stock_1 = i[2]
+            for i in values:
+                if i[0] == 2:
+                    stock_2 = i[2]
+            for i in values:
+                if i[0] == 3:
+                    stock_3 = i[2]
+            for i in values:
+                if i[0] == 4:
+                    stock_4 = i[2]
+            print(stock_1, stock_2, stock_3, stock_4)
             new_stock_1 = self.stock_dic[1] - stock_1
             new_stock_2 = self.stock_dic[2] - stock_2
             new_stock_3 = self.stock_dic[3] - stock_3
@@ -416,9 +473,7 @@ class main(tk.Frame):
             self.set_stock(new_stock_1, new_stock_2, new_stock_3, new_stock_4)
 
 
-
     def set_stock(self, item_1, item_2, item_3, item_4):
-        print(item_1, item_2, item_3, item_4)
         db.set_stock(item_1, 1)
         db.set_stock(item_2, 2)
         db.set_stock(item_3, 3)
@@ -491,7 +546,6 @@ class main(tk.Frame):
         data = self.trv_clients.item(selected_item)
         # converts to the data at row id
         self.selected = data.get("values")
-        print(self.selected)
 
     def get_selection_booking(self, event):
         # row id of treeview
@@ -499,7 +553,6 @@ class main(tk.Frame):
         data = self.trv_bookings.item(selected_item)
         # converts to the data at row id
         self.selected = data.get("values")
-        print(self.selected)
 
 
     def manage_client_window(self, event):
@@ -547,22 +600,30 @@ class main(tk.Frame):
         self.pop_add_client_window = tk.Toplevel(self)
 
         lbl_firstname = ttk.Label(self.pop_add_client_window, text="First Name")
-        self.ent_firstname = tk.Entry(self.pop_add_client_window, textvariable=self.firstname_text)
+        self.ent_firstname = tk.Entry(self.pop_add_client_window, textvariable=self.firstname_text, validate = 'focus', validatecommand = ('firstname_valid', '%P'))
+        self.lbl_firstname_valid = ttk.Label(self.pop_add_client_window)
+        firstname_valid = self.pop_add_client_window.register(self.validate_name)
+
         lbl_lastname = ttk.Label(self.pop_add_client_window, text="Last Name")
         self.ent_lastname = tk.Entry(self.pop_add_client_window, textvariable=self.lastname_text)
+
+
         lbl_phone = ttk.Label(self.pop_add_client_window, text="Phone Number")
-        self.ent_phone = tk.Entry(self.pop_add_client_window, textvariable=self.phone_text)
+        # method stored in main window because of this
+        phone_valid = self.pop_add_client_window.register(self.validate_phone)
+        # %P is a tkinter parameter - check docs - when focus out
+        self.ent_phone = tk.Entry(self.pop_add_client_window, textvariable=self.phone_text, validate = 'focus', validatecommand = (phone_valid, '%P'))
+
+        self.lbl_phone_valid = ttk.Label(self.pop_add_client_window)
 
         lbl_firstname.pack()
         self.ent_firstname.pack()
-
+        self.lbl_firstname_valid.pack()
         lbl_lastname.pack()
         self.ent_lastname.pack()
-
-
-
         lbl_phone.pack()
         self.ent_phone.pack()
+        self.lbl_phone_valid.pack()
 
         lbl_dob = ttk.Label(self.pop_add_client_window, text="Client Date of Birth")
         lbl_dob.pack()
@@ -576,6 +637,30 @@ class main(tk.Frame):
                                           command=self.add_client_callback)
         self.btn_add_client.pack()
 
+    def validate_name(self, input):
+        regex = "^[\-'a-zA-Z ]+$"
+        # if matches regex patten, then
+        if (re.search(regex, input) and input.isalpha):
+            self.lbl_firstname_valid.config(text="")
+            self.btn_add_client.config(state='active')
+            return True
+        else:
+            self.lbl_firstname_valid.config(text="Invalid First Name", foreground="red")
+            self.btn_add_client.config(state='disabled')
+            return False
+    def validate_phone(self, input):
+        # https://stackoverflow.com/questions/44327236/regex-for-uk-phone-number
+        regex = '^(?:0|\+?44)(?:\d\s?){9,10}$'
+        # if matches regex patten, then
+        if(re.search(regex, input)):
+            self.lbl_phone_valid.config(text="")
+            self.btn_add_client.config(state = 'active')
+            return True
+        else:
+            self.lbl_phone_valid.config(text="Invalid Phone", foreground = "red")
+            self.btn_add_client.config(state = 'disabled')
+            return False
+
     def date_pick_callback(self):
         self.picked_date = self.date.get_date()
         return self.picked_date
@@ -588,7 +673,6 @@ class main(tk.Frame):
         self.populate_clients()
 
     def update_client_callback(self):
-        print(self.selected)
         db.update_client(self.selected[0],
                          self.ent_firstname.get(),
                          self.ent_lastname.get(),
@@ -621,7 +705,6 @@ class Db():
         self.cur = self.conn.cursor()
 
     def insert_client(self, firstname_text, lastname_text, dob_text, phone_text):
-        print(firstname_text, lastname_text, dob_text, phone_text)
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
         self.cur.execute("INSERT INTO client VALUES (NULL,?,?,?,?)",(firstname_text,lastname_text,dob_text,phone_text))
@@ -670,7 +753,7 @@ class Db():
     def get_service_name(self, id):
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
-        self.cur.execute("SELECT service from service WHERE id=?",(id))
+        self.cur.execute("SELECT service from service WHERE id=?",(id,))
         services_name = self.cur.fetchall()
         self.conn.commit()
         return services_name
@@ -717,11 +800,26 @@ class Db():
     def get_stock_name(self, id):
         self.conn = sqlite3.connect("clients.db")
         self.cur = self.conn.cursor()
-        self.cur.execute("SELECT stockName from stock WHERE id = ?",(id))
+        self.cur.execute("SELECT stockName from stock WHERE id = ?",(id,))
         rows = self.cur.fetchall()
         self.conn.commit()
         return rows
 
+    def get_critical(self, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("SELECT critical from stock WHERE id = ?", (id,))
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
+
+    def set_critical(self, level, id):
+        self.conn = sqlite3.connect("clients.db")
+        self.cur = self.conn.cursor()
+        self.cur.execute("UPDATE stock SET critical = ? WHERE id = ?", (level, id))
+        rows = self.cur.fetchall()
+        self.conn.commit()
+        return rows
 
     def delete_booking(self, id):
         self.conn = sqlite3.connect("clients.db")
