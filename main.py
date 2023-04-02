@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkcalendar import Calendar
 import sqlite3
-import re
+import regex as re
 
 # inherits tkinter
 class App(tk.Tk):
@@ -179,25 +179,38 @@ class main(tk.Frame):
         pop_add_booking_window = tk.Toplevel(self)
 
         lbl_firstname = ttk.Label(pop_add_booking_window, text="First Name")
-        self.ent_firstname = tk.Entry(pop_add_booking_window, textvariable=self.firstname_text)
+        firstname_valid = pop_add_booking_window.register(self.validate_firstname)
+        self.ent_firstname = tk.Entry(pop_add_booking_window, textvariable=self.firstname_text, validate = 'focus', validatecommand = (firstname_valid, '%P'))
+        self.lbl_firstname_valid = ttk.Label(pop_add_booking_window)
+
         lbl_lastname = ttk.Label(pop_add_booking_window, text="Last Name")
-        self.ent_lastname = tk.Entry(pop_add_booking_window, textvariable=self.lastname_text)
+        lastname_valid = pop_add_booking_window.register(self.validate_lastname)
+        self.ent_lastname = tk.Entry(pop_add_booking_window, textvariable=self.lastname_text, validate = 'focus', validatecommand = (lastname_valid, '%P'))
+        self.lbl_lastname_valid = ttk.Label(pop_add_booking_window)
+
         lbl_dob = ttk.Label(pop_add_booking_window, text="Date of Birth")
         self.ent_dob = tk.Entry(pop_add_booking_window, textvariable=self.dob_text)
+        self.lbl_dob_valid = ttk.Label(pop_add_booking_window)
+
         lbl_phone = ttk.Label(pop_add_booking_window, text="Phone Number")
         self.ent_phone = tk.Entry(pop_add_booking_window, textvariable=self.phone_text)
+        self.lbl_phone_valid = tk.Label(pop_add_booking_window)
 
         lbl_firstname.pack()
         self.ent_firstname.pack()
+        self.lbl_firstname_valid.pack()
 
         lbl_lastname.pack()
         self.ent_lastname.pack()
+        self.lbl_lastname_valid.pack()
 
         lbl_dob.pack()
         self.ent_dob.pack()
+        self.lbl_dob_valid.pack()
 
         lbl_phone.pack()
         self.ent_phone.pack()
+        self.lbl_phone_valid.pack()
 
         self.cbut_editing_value = tk.IntVar(value=0)
         cbut_editing = tk.Checkbutton(pop_add_booking_window,
@@ -600,20 +613,26 @@ class main(tk.Frame):
         self.pop_add_client_window = tk.Toplevel(self)
 
         lbl_firstname = ttk.Label(self.pop_add_client_window, text="First Name")
-        self.ent_firstname = tk.Entry(self.pop_add_client_window, textvariable=self.firstname_text, validate = 'focus', validatecommand = ('firstname_valid', '%P'))
+        firstname_valid = self.pop_add_client_window.register(self.validate_firstname)
+        self.ent_firstname = tk.Entry(self.pop_add_client_window,
+                                      textvariable=self.firstname_text,
+                                      validate = 'focus',
+                                      validatecommand = (firstname_valid, '%P'))
         self.lbl_firstname_valid = ttk.Label(self.pop_add_client_window)
-        firstname_valid = self.pop_add_client_window.register(self.validate_name)
 
         lbl_lastname = ttk.Label(self.pop_add_client_window, text="Last Name")
-        self.ent_lastname = tk.Entry(self.pop_add_client_window, textvariable=self.lastname_text)
-
+        lastname_valid = self.pop_add_client_window.register(self.validate_lastname)
+        self.ent_lastname = tk.Entry(self.pop_add_client_window, textvariable=self.lastname_text,
+                                     validate = 'focus',
+                                     validatecommand = (lastname_valid, '%P'))
+        self.lbl_lastname_valid = ttk.Label(self.pop_add_client_window)
 
         lbl_phone = ttk.Label(self.pop_add_client_window, text="Phone Number")
-        # method stored in main window because of this
         phone_valid = self.pop_add_client_window.register(self.validate_phone)
-        # %P is a tkinter parameter - check docs - when focus out
-        self.ent_phone = tk.Entry(self.pop_add_client_window, textvariable=self.phone_text, validate = 'focus', validatecommand = (phone_valid, '%P'))
-
+        self.ent_phone = tk.Entry(self.pop_add_client_window,
+                                  textvariable=self.phone_text,
+                                  validate = 'focus',
+                                  validatecommand = (phone_valid, '%P'))
         self.lbl_phone_valid = ttk.Label(self.pop_add_client_window)
 
         lbl_firstname.pack()
@@ -621,6 +640,7 @@ class main(tk.Frame):
         self.lbl_firstname_valid.pack()
         lbl_lastname.pack()
         self.ent_lastname.pack()
+        self.lbl_lastname_valid.pack()
         lbl_phone.pack()
         self.ent_phone.pack()
         self.lbl_phone_valid.pack()
@@ -637,24 +657,34 @@ class main(tk.Frame):
                                           command=self.add_client_callback)
         self.btn_add_client.pack()
 
-    def validate_name(self, input):
-        regex = "^[\-'a-zA-Z ]+$"
-        # if matches regex patten, then
-        if (re.search(regex, input) and input.isalpha):
+    def validate_lastname(self, input):
+        regex = "^[\p{L} \.'\-]+$"
+        if (re.search(regex, input)):
+            self.lbl_lastname_valid.config(text="")
+            self.btn_add_client.config(state='normal')
+            return True
+        else:
+            self.lbl_lastname_valid.config(text="Invalid First Name", foreground="red")
+            self.btn_add_client.config(state='disabled')
+            return False
+
+    def validate_firstname(self, input):
+        regex = "^[\p{L} \.'\-]+$"
+        if (re.search(regex,input)):
             self.lbl_firstname_valid.config(text="")
-            self.btn_add_client.config(state='active')
+            self.btn_add_client.config(state='normal')
             return True
         else:
             self.lbl_firstname_valid.config(text="Invalid First Name", foreground="red")
             self.btn_add_client.config(state='disabled')
             return False
+
     def validate_phone(self, input):
-        # https://stackoverflow.com/questions/44327236/regex-for-uk-phone-number
         regex = '^(?:0|\+?44)(?:\d\s?){9,10}$'
         # if matches regex patten, then
-        if(re.search(regex, input)):
+        if(re.search(regex,input)):
             self.lbl_phone_valid.config(text="")
-            self.btn_add_client.config(state = 'active')
+            self.btn_add_client.config(state = 'normal')
             return True
         else:
             self.lbl_phone_valid.config(text="Invalid Phone", foreground = "red")
