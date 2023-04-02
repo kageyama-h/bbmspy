@@ -102,6 +102,18 @@ class main(tk.Frame):
         self.trv_bookings.bind('<Double-Button>', self.manage_booking_window)
 
 
+        self.ent_client_search = ttk.Entry(top)
+        self.ent_client_search.pack()
+
+        self.ent_booking_search = ttk.Entry(middle)
+        self.ent_booking_search.pack()
+
+        btn_client_search = ttk.Button(top, text = "Search", command = self.client_query)
+        btn_client_search.pack()
+
+        btn_bookings_search = ttk.Button(middle, text = "Search", command = self.booking_query)
+        btn_bookings_search.pack()
+
         btn_add_client = ttk.Button(bottom_left, text = "Add Client",
                                        command = self.add_client_window)
         btn_add_client.pack(fill = tk.BOTH)
@@ -134,6 +146,26 @@ class main(tk.Frame):
         self.populate_clients()
         self.populate_bookings()
         self.get_stock_balance()
+
+    def client_query(self):
+        query = self.ent_client_search.get()
+        selections = []
+        for i in self.trv_clients.get_children():
+            if query in self.trv_clients.item(i)['values']:
+                print(self.trv_clients.item(i)['values'])
+                selections.append(i)
+        print('search completed')
+        self.trv_clients.selection_set(selections)
+
+    def booking_query(self):
+        query = self.ent_booking_search.get()
+        selections = []
+        for i in self.trv_bookings.get_children():
+            if query in self.trv_bookings.item(i)['values']:
+                print(self.trv_bookings.item(i)['values'])
+                selections.append(i)
+        print('search completed')
+        self.trv_bookings.selection_set(selections)
 
     def delete_booking_callback(self):
         db.delete_booking(self.selected[0])
@@ -568,6 +600,7 @@ class main(tk.Frame):
         self.selected = data.get("values")
 
 
+
     def manage_client_window(self, event):
         pop_manage_client_window = tk.Toplevel(self)
 
@@ -658,25 +691,25 @@ class main(tk.Frame):
         self.btn_add_client.pack()
 
     def validate_lastname(self, input):
-        regex = "^[\p{L} \.'\-]+$"
+        regex = "^[\p{L} \.'\-]{1,36}$"
         if (re.search(regex, input)):
             self.lbl_lastname_valid.config(text="")
             self.btn_add_client.config(state='normal')
             return True
         else:
-            self.lbl_lastname_valid.config(text="Invalid First Name", foreground="red")
+            self.lbl_lastname_valid.config(text="Invalid Last Name", foreground="red")
             self.btn_add_client.config(state='disabled')
             return False
 
     def validate_firstname(self, input):
-        regex = "^[\p{L} \.'\-]+$"
+        regex = "^[\p{L} \.'\-]{1,36}$"
         if (re.search(regex,input)):
             self.lbl_firstname_valid.config(text="")
             self.btn_add_client.config(state='normal')
             return True
         else:
             self.lbl_firstname_valid.config(text="Invalid First Name", foreground="red")
-            self.btn_add_client.config(state='disabled')
+            self.btn_add_client.config(state = 'disabled')
             return False
 
     def validate_phone(self, input):
