@@ -168,8 +168,25 @@ class main(tk.Frame):
         self.trv_bookings.selection_set(selections)
 
     def delete_booking_callback(self):
-        db.delete_booking(self.selected[0])
-        self.populate_bookings()
+        confirm_window = tk.Toplevel(self)
+
+        def exit():
+            confirm_window.destroy()
+            confirm_window.update()
+
+        def delete():
+            db.delete_booking(self.selected[0])
+            self.populate_bookings()
+            exit()
+
+        lbl = ttk.Label(confirm_window, text="Are you sure?")
+        lbl.pack()
+        btn_yes = ttk.Button(confirm_window, text="Yes", command=delete)
+        btn_yes.pack()
+        btn_no = ttk.Button(confirm_window, text="No", command=exit)
+        btn_no.pack()
+
+
     
 
     def client_deletion_callback(self):
@@ -385,28 +402,36 @@ class main(tk.Frame):
         lbl_1.pack()
 
         self.ent_1_val = tk.IntVar()
-        self.ent_1 = ttk.Entry(stock, textvariable = self.ent_1_val)
+        self.ent_1 = ttk.Entry(stock, textvariable = self.ent_1_val,
+                               justify = tk.CENTER,
+                               font = ('Helvitica', 20, 'bold') )
         self.ent_1.pack()
 
         lbl_2 = ttk.Label(stock, text="{}".format(db.get_stock_name(2)[0][0]))
         lbl_2.pack()
 
         self.ent_2_val = tk.IntVar()
-        self.ent_2 = ttk.Entry(stock, textvariable = self.ent_2_val)
+        self.ent_2 = ttk.Entry(stock, textvariable = self.ent_2_val,
+                               justify = tk.CENTER,
+                               font = ('Helvitica', 20, 'bold'))
         self.ent_2.pack()
 
         lbl_3 = ttk.Label(stock, text="{}".format(db.get_stock_name(3)[0][0]))
         lbl_3.pack()
 
         self.ent_3_val = tk.IntVar()
-        self.ent_3 = ttk.Entry(stock, textvariable = self.ent_3_val)
+        self.ent_3 = ttk.Entry(stock, textvariable = self.ent_3_val,
+                               justify = tk.CENTER,
+                               font = ('Helvitica', 20, 'bold'))
         self.ent_3.pack()
 
         lbl_4 = ttk.Label(stock, text="{}".format(db.get_stock_name(4)[0][0]))
         lbl_4.pack()
 
         self.ent_4_val = tk.IntVar()
-        self.ent_4 = ttk.Entry(stock, textvariable = self.ent_4_val)
+        self.ent_4 = ttk.Entry(stock, textvariable = self.ent_4_val,
+                               justify = tk.CENTER,
+                               font = ('Helvitica', 20, 'bold'))
         self.ent_4.pack()
 
         btn_update = ttk.Button(stock, text = "Update", command = self.update_stock_callback)
